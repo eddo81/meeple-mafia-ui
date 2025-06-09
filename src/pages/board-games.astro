@@ -1,22 +1,14 @@
 ---
-const PAYLOAD_URL = import.meta.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000';
+import { payloadClient } from '../api/PayloadClient';
+import { BoardGame } from '../api/models/BoardGame';
 
-import { BoardGame } from '../schemas/BoardGame';
-import { PayloadResponse } from '../schemas/PayloadResponse';
+const response = await payloadClient.find('board-games');
 
-const BoardGameCollectionSchema = PayloadResponse(BoardGame);
+let boardGames: Array<BoardGame> = [];
 
-async function fetchBoardGames() {
-  const res = await fetch(`${PAYLOAD_URL}/api/board-games`);
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch board games');
-  }
-
-  return BoardGameCollectionSchema.parse(await res.json());
+if(response.isSuccess && response.data) {  
+  boardGames = response.data.docs.map((json) => BoardGame.fromJson(json));
 }
-
-const boardGameCollection = await fetchBoardGames();
 ---
 
 <html>
@@ -26,15 +18,15 @@ const boardGameCollection = await fetchBoardGames();
   <body>
     <h1>Board Games</h1>
     <ul>
-      {boardGameCollection.docs.length === 0 ? (
-        <li>No board games found.</li>
-      ) : (
-      boardGameCollection.docs.map(boardGame => (
-          <li>
-            <strong>{boardGame.title}</strong> — Rating: {boardGame.rating || 'N/A'}
-          </li>
-        ))
-      )}
+      {
+        response.isSuccess && boardGames.length > 0
+          ? boardGames.map(boardGame => (
+              <li>
+                <strong>{boardGame.title}</strong> — Rating: {boardGame.rating ?? 'N/A'}
+              </li>
+            ))
+          : <li>No board games found.</li>
+      }
     </ul>
   </body>
 </html>
