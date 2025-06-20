@@ -5,16 +5,23 @@ import type { Json } from "./types/Json";
 export class PayloadHttpClient {
   private _baseUrl: string;
   private _headers: Record<string, string>;
-  private _apiKey: string | null = null;
+  private _apiKey?: string | null = null;
   private _timeoutMs: number = 10_000; // 10 seconds
 
   constructor(options: { baseUrl: string; headers?: Record<string, string>; apiKey?: string | null; }) {
-    this._baseUrl = options.baseUrl;
+    try {
+      this._baseUrl = new URL(options.baseUrl).toString();
+    } 
+    catch {
+      throw new Error(`[PayloadHttpClient] Invalid base URL: ${options.baseUrl}`);
+    }
+    
     this._headers = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       ...(options.headers ?? {}),
     };
+
     if (options.apiKey) {
       this._apiKey = options.apiKey;
       this._headers['Authorization'] = `Bearer ${this._apiKey}`;
@@ -35,8 +42,9 @@ export class PayloadHttpClient {
 
   set apiKey(apiKey: string | null) {
     this._apiKey = apiKey;
-    if (apiKey) {
-      this._headers['Authorization'] = `Bearer ${apiKey}`;
+
+    if (this._apiKey) {
+      this._headers['Authorization'] = `Bearer ${this._apiKey}`;
     } 
     else {
       delete this._headers['Authorization'];
@@ -51,7 +59,7 @@ export class PayloadHttpClient {
     return query ? url + query : url;
   }
 
-  private async _fetch(url: string, options: RequestInit ): Promise<Response> {
+  private async _fetch(url: string, options: RequestInit): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this._timeoutMs);
     

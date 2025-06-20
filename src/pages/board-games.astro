@@ -6,8 +6,8 @@ const response = await payloadClient.find('board-games');
 
 let boardGames: Array<BoardGame> = [];
 
-if(response.isSuccess && response.data) {  
-  boardGames = response.data.docs.map((json) => BoardGame.fromJson(json));
+if(response.isSuccess && response.data) {
+  boardGames = response.data.docs.map((doc) => BoardGame.fromJson(doc.json));
 }
 ---
 
@@ -22,7 +22,9 @@ if(response.isSuccess && response.data) {
         response.isSuccess && boardGames.length > 0
           ? boardGames.map(boardGame => (
               <li>
-                <strong>{boardGame.title}</strong> — Rating: {boardGame.rating ?? 'N/A'}
+                <p>title: <strong>{boardGame.title}</strong></p> 
+                <p>Rating: {boardGame.rating ?? 'N/A'}</p>
+                <p>{boardGame.description}</p>
               </li>
             ))
           : <li>No board games found.</li>
